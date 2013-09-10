@@ -1,0 +1,26 @@
+{% load i18n %}
+<div id="vm-connect-overlay-content" class="hidden vm-connect overlay-content">
+    <div class="error hidden description">
+        <p>{% trans "Cannot retrieve machine connection infromation" %}</p>
+    </div>
+    <div class="connection-info connect-cont">
+        <div class="description">
+            <p></p>
+        </div>
+        <div class="connect copy-content">
+            <p></p>
+            <div class="clipboard"></div>
+        </div>
+        <div class="subinfo description">
+          <p></p>
+        </div>
+        <div class="extra-info">
+          <p>
+          <span class="important">
+            Keep in mind that recently rebooted or created VMs may take up to 5
+            minutes to connect to them.
+          </span>
+          </p>
+        </div>
+    </div>
+</div>

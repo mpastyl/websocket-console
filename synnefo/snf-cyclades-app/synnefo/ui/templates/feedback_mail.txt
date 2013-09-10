@@ -1,0 +1,13 @@
+Feedback message:
+{{ message }}
+
+User accepted data send:
+{{ allow_data_send }}
+
+User info:
+ID: {{ request.user_uniq }}
+Email: {{ email }}
+
+User application data:
+{{ data }}
+

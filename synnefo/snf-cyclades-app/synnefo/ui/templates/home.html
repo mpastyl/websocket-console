@@ -1,0 +1,685 @@
+<!doctype html>
+<html>
+
+{% load i18n %}
+<head>
+    <title>{{ BRANDING_SERVICE_NAME }}</title>
+    
+    <!--<meta http-equiv="X-UA-Compatible" content="IE=7">-->
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <link href="https://fonts.googleapis.com/css?family=Ubuntu&subset=latin,greek" rel="stylesheet" type="text/css" >
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans&subset=latin,greek' rel='stylesheet' type='text/css'>
+
+    <link rel="shortcut icon" href="{{ BRANDING_FAVICON_URL }}" />
+
+    {% comment %}
+    <script type="text/javascript" src="{% url javascript_catalog %}"></script> 
+    {% endcomment %}
+
+    <link rel="stylesheet" type="text/css" href="{{ SYNNEFO_CSS_URL }}main.css"/>
+
+    <!--[if IE]>
+        <style type="text/css" media="all">@import url({{ SYNNEFO_CSS_URL }}ie.css);</style>
+    <![endif]-->
+    <!--[if (lte IE 8)]>
+        <style type="text/css" media="all">@import url({{ SYNNEFO_CSS_URL }}ie8.css);</style>
+    <![endif]-->
+    <!--[if (lte IE 7)]>
+        <style type="text/css" media="all">@import url({{ SYNNEFO_CSS_URL }}ie7.css);</style>
+    <![endif]-->
+
+    <script src="{{ SYNNEFO_JS_LIB_URL }}jquery-1.7.2.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}jquery.cookie.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}jquery.client.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}jquery.tools.min.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}jquery.dataTables.min.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}jquery.pagination.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}jquery.zclip.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}jquery.base64.js"></script>
+
+
+    <script src="{{ SYNNEFO_JS_LIB_URL}}underscore.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}underscore.string.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}backbone.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}json2.js"></script>
+    <script src="{{ SYNNEFO_JS_LIB_URL}}stacktrace.js"></script>
+
+    <!--[if (lt IE 7)]>
+        <script src="{{ SYNNEFO_JS_LIB_URL }}selectivizr.js"></script>
+    <! [endif] -->
+
+    <!--[if IE]>
+        <script src="{{ SYNNEFO_JS_URL }}ui/ie_fixes.js"></script>
+    <![endif]-->
+    
+    <script src="{{ SYNNEFO_JS_URL }}utils.js"></script>
+    <script src="{{ SYNNEFO_JS_URL }}auth.js"></script>
+    <script src="{{ SYNNEFO_JS_URL }}quota.js"></script>
+    <script src="{{ SYNNEFO_JS_URL }}sync.js"></script>
+    <script src="{{ SYNNEFO_JS_URL }}models.js"></script>
+    <script src="{{ SYNNEFO_JS_URL }}glance_models.js"></script>
+    <script src="{{ SYNNEFO_JS_URL }}views.js"></script>
+
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_vms_base_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_model_views.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_error_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_icon_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_single_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_list_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_networks_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_disks_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_metadata_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_feedback_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_create_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_connect_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_public_keys_view.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_custom_images.js"></script>
+
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_router.js"></script>
+    <script src="{{ SYNNEFO_JS_WEB_URL }}ui_main_view.js"></script>
+
+    <!-- the following views require refactor -->
+    <script src="{{ SYNNEFO_JS_URL }}synnefo.js"></script>
+    <script>
+        tmp_auth_client = new synnefo.auth.AstakosClient({
+            cookie_name: '{{ auth_cookie_name }}',
+            login_url: {{ login_redirect|safe }}
+        });
+        if (!tmp_auth_client.get_token()) { tmp_auth_client.redirect_to_login(); }
+    </script>
+    {{ CLOUDBAR_CODE }}
+    
+    <script>
+        // empty object for console to avoid errors in browsers that don't support it
+        if (!window.console) {window.console = {}; window.console.log = window.console.info = window.console.debug =
+            window.console.error = function() {}};
+        
+        //populate available image icons array
+        var os_icons = {{image_icons|safe}};
+        
+        // timeout value from settings.py
+        var TIMEOUT = {{ timeout }};
+        var TIMEOUTS_OCCURED = 0;
+        var SKIP_TIMEOUTS = {{ skip_timeouts }};
+        var UPDATE_INTERVAL = {{ update_interval }};
+        var APP_DEBUG = {% if DEBUG %}true{% else %}false{% endif %};
+        var API_OVERLAY_TITLE = "{% trans "API access" %}";
+        var API_OVERLAY_SUBCONTENT = "{% blocktrans %}The API key provides full access to your <em>{{ BRANDING_SERVICE_NAME}}</em> account, so always keep it private.{% endblocktrans %}";
+
+        STATE_TEXTS = {
+            'UNKNOWN': '{% trans "Unknown" %}',
+            'BUILD':  '{% trans "Building..." %}',
+            'FIREWALL':  '{% trans "Firewall change..." %}',
+            'REBOOT': '{% trans "Rebooting..." %}',
+            'STOPPED':'{% trans "Stopped" %}',
+            'ACTIVE': '{% trans "Running" %}',
+            'ERROR':  '{% trans "Error" %}',
+            'DELETE': '',
+            'DESTROY': '{% trans "Destroying..." %}',
+            'BUILD_INIT':  '{% trans "Building..." %}',
+            'BUILD_COPY':  '{% trans "Building..." %}',
+            'BUILD_FINAL':  '{% trans "Building..." %}',
+            'SHUTDOWN': '{% trans "Shutting down..." %}',
+            'START': '{% trans "Starting..." %}',
+            'CONNECT': '{% trans "Connecting..." %}',
+            'DISCONNECT': '{% trans "Disconnecting..." %}'
+        }
+
+
+
+        // building statuses
+        var BUILDING_MESSAGES = {
+            'INIT': '{% trans "Initializing..." %}',
+            'COPY': '{% trans "{0} of {1} ({2}%)" %}',
+            'FINAL': '{% trans "Bulding image..." %}'
+        }
+
+        var ERROR_OVERRIDES = {
+            // error message header
+            'HEADER' : '{% trans "Error" %}',
+            // default
+            'DEFAULT' : '{% trans "Could not contact the service. Please check your network connectivity and try again." %}',
+            // bad request
+            '400' : '{% trans "Malformed request." %}',
+            // not found
+            '404' : '{% trans "Your request has failed. Resource not found." %}',
+            // internal server error
+            '500' : '{% trans "There has been an Internal Error. Our administrators have been notified." %}',
+            // service unavailable
+            '501' : '{% trans "This server has not been implemented yet." %}',
+            // service unavailable
+            '502' : '{% trans "Bad Gateway error." %}',
+            // service unavailable
+            '503' : '{% trans "This service is unavailable right now, please try again later." %}',
+            // no server handshake
+            '0' : '{% trans "Could not contact the server." %}',
+            // no images found
+            '-212' : '{% trans "Cannot show the Create machine wizard: No images found." %}',
+            // no flavors found
+            '-213' : '{% trans "Cannot show the Create machine wizard: No machine configurations found." %}',
+            // error box title
+            'GENERIC_POPUP_HEADER' : '{% trans "Something seems to have gone wrong :( Here is what happened:" %}',
+            // no advanced details
+            'NO_DETAILS' : '{% trans "Νο advanced details provided" %}',
+            // timeout message
+            'TIMEOUT' : '{% trans "It seems the server takes too long to respond, please check your network connectivity" %}'
+        };
+
+        var SUGGESTED_FLAVORS = {{ suggested_flavors|safe }};
+        var SUGGESTED_ROLES = {{ suggested_roles|safe }}
+
+        var SUCCESS = {
+            'HEADER' : '{% trans "Success" %}',
+            'DEFAULT' : '{% trans "Your request has been succefully executed." %}',
+            'PASSWORD' : '{% trans "Password:" %}',
+            'CREATE_VM_SUCCESS' : '{% trans "Success" %}',
+            'CREATE_VM_SUCCESS_ONE' : '{% trans "Your new machine is now buidling... (this might take a few minutes)" %}',
+            'CREATE_VM_SUCCESS_TWO' : '{% trans "Write down your password now:" %}',
+            'CREATE_VM_SUCCESS_THREE' : '{% trans "You will need this later to connect to your machine." %}',
+            'CREATE_VM_SUCCESS_FOUR' : '{% trans "After closing this window you will NOT be able to retrieve it again." %}'
+        };
+
+        var VARIOUS = {
+            'CONFIRM' : '{% trans "Confirm" %}',
+            'CANCEL' : '{% trans "Cancel" %}',
+            'APPLY' : '{% trans "Apply" %}',
+            'OFF' : '{% trans "Off" %}',
+            'ON' : '{% trans "On" %}'
+        };
+
+    </script>
+</head>
+
+<body id="app">
+    <div id="container">
+        <div id="header">
+            <div id="user">
+                <div class="usermenu">
+                    <div class="username"></div>
+                    <ul class="useractions">
+                        <!--<li class="feedback"><a class="action" href="#">{% trans "send feedback..." %}</a></li>-->
+                        <li class="api"><a class="action" href="#">{% trans "API access..." %}</a></li>
+                        <li class="public_keys"><a class="action" href="#">{% trans "ssh public keys..." %}</a></li>
+                        <!--<li class="custom_images"><a class="action" href="#">{% trans "custom images..." %}</a></li>-->
+                        <!--<li class="logout last"><a class="action" href="#">{% trans "logout" %}</a></li>-->
+                    </ul>
+                </div>
+                <div class="langmenu">
+                    <a class="current_lang">en</a>
+                    {% comment %}
+                {% get_available_languages as LANGUAGES %}
+                {% for lang in LANGUAGES %}
+                <a {% if current_lang == lang.0 %}
+                    class="current_lang" {% else %}  href="/lang/?l={{lang.0}}" {% endif %}>{{lang.0}}</a>
+
+                    {% if not forloop.last %}<span class="sep">~</span>{% endif %}
+                    {% endfor %}
+                {% endcomment %}
+                </div>
+            </div>
+            <div class="header-logo">
+                <a href="/" title="{{ BRANDING_SERVICE_NAME }} Compute">
+                     <img src="{{ BRANDING_COMPUTE_LOGO_URL }}" alt="{{ BRANDING_SERVICE_NAME }}"/>  
+                </a>
+            </div>
+        </div>
+        <div id="content">
+            <div id="wrapper" class="clearfix">
+
+                <div class="panes-menu clearfix">
+                <!-- tabs -->
+                <div class="tab-name">{% trans "machines" %}</div>
+                <ul class="css-tabs">
+                    <li><a href="machines" title="{% trans "manage your virtual machines" %}"
+                        class="primary" id="machines_view_link">
+                        <img src="{{ SYNNEFO_IMAGES_URL }}machines-icon.png" /></a></li>
+                    <li><a href="networks" title="{% trans "configure networking" %}"
+                        class="primary" id="networks_view_link">
+                        <img src="{{ SYNNEFO_IMAGES_URL }}networks-icon.png" /></a></li>
+                    {% comment %}
+                    <li><a href="disks" title="{% trans "manage your storage volumes" %}"
+                        class="primary" id="disks_view_link">
+                        <img src="{{ SYNNEFO_IMAGES_URL }}disks-icon.png" /></a></li>
+                    {% endcomment %}
+                </ul>
+                </div>
+                <div class="css-panes">
+                    <div id="machines-pane" class="pane" style="display:block;">
+                        {% include "partials/machines.html" %}
+                    </div>
+                    <div id="networks-pane" class="pane">
+                        {% include "partials/networks.html" %}
+                    </div>
+                    <div id="disks-pane" class="pane">
+                    	{% include "partials/disks.html" %}
+                    </div>
+
+                    <div class="confirm_multiple clearfix" id="multiple_actions_container">
+                        <div class="confirm_multiple_actions confirm-all-cont global hidden confirm_multiple_cont clearfix">
+                            <div class="confirm-all msg">
+                                <p>You requested multiple actions to execute (<span class="show">show all</span>)</p>
+                                <button class="yes">Confirm all</button>
+                                <button class="no">Cancel all</button>
+                            </div>
+                            <div class="details"></div>
+                        </div>
+                        <div class="ns-confirms-cont">
+                            <div class="confirm_multiple_actions hidden confirm_multiple_cont
+                                ns-confirm clearfix"
+                                id="conirm_multiple_cont_template">
+                                <div class="confirm-all msg">
+                                    <p></p>
+                                    <button class="yes"></button>
+                                    <button class="no"></button>
+                                </div>
+                                <div class="details"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- activate tabs with JavaScript -->
+    <script>
+
+        //load opera css fixes
+        if ($.browser.opera) {
+            $("<link/>", {
+               rel: "stylesheet",
+               type: "text/css",
+               href: "{{ SYNNEFO_CSS_URL }}opera.css"
+            }).appendTo("head");
+        }
+
+        $(document).ready(function(){
+
+            {% if current_lang == "el" and not DEBUG %}
+                window.location = "/lang/?l=en";
+            {% endif %}
+
+            // user menu interaction
+            var resetUserMenu = function() {
+                $(this).removeClass("hovered");
+                $(this).removeClass("active");
+            }
+
+            $(".usermenu").live("click", function(){
+                $(this).addClass("active");
+            });
+            $(".usermenu").bind('mouseleave', resetUserMenu);
+            $(".usermenu").live("mouseover", function(){
+                $(this).addClass("hovered");
+            });
+
+            $(".usermenu li").mouseenter(function(){$(this).addClass("hovered")})
+            $(".usermenu li").mouseleave(function(){$(this).removeClass("hovered")});
+
+            // bind menu actions
+            $(".usermenu .logout").click(function() {
+                synnefo.auth_client.logout();
+            });
+
+            $(".usermenu .api").click(function(){
+                synnefo.ui.main.api_info_view.show();
+            });
+
+        });
+        
+        function positionBottomMessages() {
+            var el = $("#multiple_actions_container");
+        }
+        
+        
+        $(document).ready(function() {
+          // Footer position handlers
+          var footerHeight = 0;
+          var footerTop = 0;
+          var $footer = $("#footer-container");
+          function _positionFooter() {
+
+              footerHeight = 80;
+              footerTop = ($(window).scrollTop()+$(window).height()-footerHeight)+"px";
+              if (($(document.body).height()+footerHeight) < $(window).height()) {
+
+                  $footer.css({
+                       position: "absolute"
+                  }).css({
+                       top: footerTop
+                  })
+               } else {
+               
+                  if ($footer.css("position") == "static") {
+                      if ($(document.body).height() < $(window).height()) {    
+                          $footer.css({
+                               position: "absolute"
+                          }).css({
+                               top: footerTop
+                           })
+                       }
+                   } else {
+
+                      $footer.css({
+                          position: "static"
+                      })
+                  }
+              }
+
+          }
+          _positionFooter();
+          window.positionFooter = _.throttle(_positionFooter, 100);
+          window.forcePositionFooter = _positionFooter;
+          $(window).scroll(window.positionFooter).resize(window.positionFooter)
+
+          $(window).bind("load", function() { 
+            _positionFooter();
+          });
+        
+        })
+    </script>
+
+    <!-- base notification for error/success reporting -->
+    <a id="notification" rel="#error-success" href="#"></a>
+    <a id="msgbox" rel="#notification-box" href="#"></a>
+    <a id="feedbackbox" rel="#feedback-form" href="#"></a>
+
+    <div class="overlay" id="generic-overlay-tpl">
+        <div class="overlay-inner">
+            <h3 class="overlay-header clearfix">
+                <span class="subtitle"></span>
+                <span class="title"></span>
+                <span class="closeme">close</span></h3>
+            <div class="container">
+                <div class="content">
+                </div>
+            </div>
+            <div class="footer"></div>
+        </div>
+    </div>
+
+    <div id="error-overlay-content" class="hidden">
+        <div class="error-nav hidden clearfix">
+            <span class="indicator"><span class="num">1</span> <span
+                    class="ind-msg">new error occured</span></span>
+            <span class="show-next nav-btn">{% trans "next" %}</span>
+            <span class="show-prev nav-btn">{% trans "previous" %}</span>
+        </div>
+        <div class="message"><p></p></div>
+        <div class="error-details">
+            <span class="key">{% trans "Module" %}</span>
+            <span class="value error-module"></span>
+
+            <span class="key">{% trans "Code" %}</span>
+            <span class="value error-code"></span>
+
+            <span class="key">{% trans "Type" %}</span>
+            <span class="value error-type"></span>
+
+            <span class="key details">{% trans "Details" %}</span>
+            <div class="value error-more-details"><p></p></div>
+        </div>
+        
+        <!--<div class="navigation">-->
+            <!--<span class="next-error">{% trans "next error" %}</span>-->
+            <!--<span class="previous-error">{% trans "previous error" %}</span>-->
+        <!--</div>-->
+        
+        <!--<div class="date">-->
+            <!--<span class="error-date"></span>-->
+        <!--</div>-->
+
+        <div class="actions">
+            <span class="show-details">{% trans "Show details" %}</span>
+            <span class="hide-details">{% trans "Hide details" %}</span>
+            <span class="report-error">{% trans "Send report" %}</span>
+            <span class="reload-app">{% trans "Reload" %}</span>
+        </div>
+    </div>
+    <div id="feedback-overlay-content" class="hidden overlay-content feedback-form">
+        <div class="description">
+            <p>
+                {% blocktrans %}{{ BRANDING_SERVICE_NAME }} is currently in alpha test and we would appreciate any kind of feedback.
+                We welcome any suggestions, questions and bug reports you may have.{% endblocktrans %}
+            </p>
+        </div>
+        <div class="description messages noborder">
+            <p class="success-message hidden">
+            {% trans "thank you for submiting your feedback" %}
+            </p>
+            <p class="error-message hidden">
+                {% trans "some error occured submiting submiting your feedback, please try again later" %}
+            </p>
+            <p class="sending-message hidden">
+            {% blocktrans %}Sending feedback...{% endblocktrans %}
+            </p>
+        </div>
+        <div class="form">
+            <div class="form-field">
+                <label for>{% trans "Please describe your problem here, provide as many details as possible" %}</label>
+                <textarea class="feedback-message"> 
+                </textarea>
+            </div>
+            <div class="form-actions clearfix noborder">
+                <span class="form-action submit">{% trans "send feedback" %}</span>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="feedback-form" class="feedback notification-box">
+      <h3 class="popup-header overlay-header">
+        <span class="header-box">{% trans "Send feedback" %}</span>
+      </h3>
+      <div class="popup-body">
+        <div class="popup-body-inner">
+          <div class="form-container">
+            <p class="feedback-intro">
+            {% blocktrans %}Synnefo is currently in alpha test and we would appreciate any kind of feedback.
+            We welcome any suggestions, questions and bug reports you may have.{% endblocktrans %}</p>
+            <form id="feedback-form">
+              <label for="feedback-msg">{% trans "Please describe your problem here, provide as many details as possible" %}</label>
+              <div class="description"></div>
+              <div class="empty-error-msg">{% trans "Please provide some feedback" %}</div>
+              <textarea name="feedback-msg" class="feedback-text"></textarea>
+
+              <input type="checkbox" name="submit-submit-data" class='submit-data' />
+              <input type="submit" value="{% trans "submit feedback" %}" class="submit" />
+              <textarea name="feedback-data" class="data-text"></textarea>
+            </form>
+          </div>
+
+          <div class="message sending">{% trans "submiting your data....." %}</div>
+          <div class="message success">
+            {% trans "thank you for submiting your feedback" %}
+            <span class="close-msg-box"> {% trans "close feedback" %}</span></div>
+          <div class="message errormsg">
+            {% trans "some error occured submiting submiting your feedback, please try again later" %}
+            <span class="close-msg-box"> {% trans "close feedback" %}</span></div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="details-overlay" class="overlay-content overlay-info hidden">
+        <div class="description intro">
+            <p></p>
+        </div>
+        <div class="description subinfo">
+            <p></p>
+        </div>
+    </div>
+
+    <div id="suspended-vm-overlay" class="overlay-content overlay-info hidden">
+        <div class="description noborder">
+          You VM has been suspended, please contact us for more details.
+        </div>
+    </div>
+
+    <div id="api-info-overlay" class="overlay-content overlay-info hidden">
+        <div class="description">
+            <p>{% blocktrans with EXTERNAL_CLIENT_URL as EXTERNAL_CLIENT_URL %}Use the following API key along with the <a
+                href="{{ EXTERNAL_CLIENT_URL }}">./kamaki</a> client to manage
+            your cloud resources from outside this page.{% endblocktrans %}</p>
+        </div>
+        <div class="copy-content">
+            <p></p>
+        </div>
+        <div class="description subinfo">
+            <p>
+            {% blocktrans %} The API key provides full access to your <em>{{ BRANDING_SERVICE_NAME }}</em> account, so always keep it private.{% endblocktrans %}
+            </p>
+        </div>
+    </div>
+
+    <div class="api_overlay_template">
+        <div class="api_overlay_content">
+            <p>Use the following API key along with the <a href="{{ EXTERNAL_CLIENT_URL }}">./kamaki</a> client to manage your cloud resources from outside this page.</p>
+        </div>
+    </div>
+
+    <div class="modal" id="notification-box" class="notification-box">
+        <h3 class="popup-header">
+            <span class="header-box"></span>
+        </h3>
+        <div class="popup-body">
+            <div class="popup-body-inner">
+                <div class="machine-now-building"></div>
+                <div class="popup-separator"></div>
+                <div class="password-container">
+                    <div class="password"></div>
+                </div>
+                <div class="sub-text"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="loading-view" class="hidden clearfix">
+        <div class="header clearfix images off">Loading images...<span></span></div>
+        <div class="header clearfix flavors off">Loading flavors...<span></span></div>
+        <div class="header clearfix resources off">Loading resources...<span></span></div>
+        <div class="header clearfix quotas off">Loading quotas...<span></span></div>
+        <div class="header clearfix vms off">Loading machines...<span></span></div>
+        <div class="header clearfix networks off">Loading networks...<span></span></div>
+        <div class="header clearfix layout off">Rendering layout...<span></span></div>
+    </div>
+    <div id="user_public_keys" class="overlay-content overlay-content hidden">
+        {% include "userdata/public_keys_view.html" %}
+    </div>
+    <div id="user_custom_images" class="overlay-content overlay-content hidden">
+        {% include "partials/custom_images.html" %}
+    </div>
+    {% include "footer.html" %}
+
+    <script>
+        $(document).ready(function() {
+            $(".css-panes").hide();
+
+            // TODO: match <= 1.9.1
+            if ($.browser.mozilla && $.browser.version.substr(0,3) == "1.9") {
+                synnefo.config.overlay_speed = 0;
+                $.fx.off = true;
+            }
+            
+            // synnefo js config
+            synnefo.VERSION = "{{ synnefo_version }}";
+            synnefo.config.update_interval = {{ update_interval }};
+            synnefo.config.update_interval_increase = {{ update_interval_increase }};
+            synnefo.config.fast_interval = {{ update_interval_fast }};
+            synnefo.config.update_interval_increase_after_calls = {{ update_interval_increase_after_calls }};
+            synnefo.config.update_interval_max = {{ update_interval_max }};
+            synnefo.config.delay_on_blur = {{ delay_on_blur }};
+            synnefo.config.update_hidden_views = {{ update_hidden_views }};
+            synnefo.config.handle_window_exceptions = {{ handle_window_exceptions }};
+            synnefo.config.ajax_timeout = {{ timeout }};
+            synnefo.config.skip_timeouts = {{ skip_timeouts }};
+            synnefo.config.machines_icons_url = '{{ SYNNEFO_IMAGES_URL }}icons/machines/';
+            synnefo.config.vm_name_template = {{ vm_name_template|safe }};
+            synnefo.config.flavors_disk_templates_info = {{ flavors_disk_templates_info|safe }};
+            synnefo.config.vm_image_common_metadata = {{ vm_image_common_metadata|safe }};
+
+            synnefo.config.diagnostics_update_interval = {{ diagnostics_update_interval }};
+            // override diagnostic messages display
+            synnefo.config.diagnostic_messages_tpls = {
+              'image-helper-task-start': "{% trans "Running task 'MESSAGE'" %}"
+            };
+            // what messages to display based on vm status
+            synnefo.config.diagnostics_status_messages_map = {
+                'BUILD': ['image-helper-task-start', 'image-info'],
+                'ERROR': ['image-error']
+            };
+
+            synnefo.config.api_urls = {
+                'userdata': '{% url ui_userdata %}', 
+                'compute':  {{ compute_api_url|safe }}, 
+                'glance': {{ glance_api_url|safe }},
+                'accounts': {{ accounts_api_url|safe }},
+            };
+            
+            // TODO: configurable userdata urls in models.js
+            synnefo.config.userdata_keys_url = '{% url ui_keys_collection %}';
+            synnefo.config.userdata_keys_limit = {{ userdata_keys_limit }};
+            
+            // media config
+            synnefo.config.media_url = '{{ UI_MEDIA_URL }}';
+            synnefo.config.js_url = '{{ SYNNEFO_JS_URL }}';
+            synnefo.config.images_url = '{{ SYNNEFO_IMAGES_URL }}';
+            synnefo.config.image_deleted_title = {{ image_deleted_title|safe }};
+            synnefo.config.changes_since_alignment = {{ changes_since_alignment }};
+            synnefo.config.image_deleted_size_title = {{ image_deleted_size_title|safe }};
+            synnefo.config.use_glance = {{ use_glance }};
+            synnefo.config.indicators_icons_url = '{{ SYNNEFO_IMAGES_URL }}icons/indicators/';
+            synnefo.config.machines_icons_url = '{{ SYNNEFO_IMAGES_URL }}icons/machines/';
+            synnefo.config.ui_console_url = '{% url ui_machines_console %}';
+            synnefo.config.ui_connect_url = '{% url ui_machines_connect %}';
+            synnefo.config.support_ssh_os_list = {{ support_ssh_os_list|safe }};
+            synnefo.config.unknown_os = {{ unknown_os|safe }};
+            synnefo.config.os_created_users = {{ os_created_users|safe }};
+            synnefo.config.feedback_post_url = {{ feedback_post_url|safe }};
+            
+            synnefo.config.logout_redirect = {{ logout_redirect|safe }};
+            synnefo.config.login_redirect = {{ login_redirect|safe }};
+            synnefo.config.auth_cookie_name = '{{ auth_cookie_name }}';
+
+            synnefo.config.translate_uuids = {{ translate_uuids|safe }};
+            synnefo.config.user_catalog_url = {{ user_catalog_url|safe }};
+
+            synnefo.config.network_suggested_subnets = {{ network_suggested_subnets|safe }};
+            synnefo.config.network_available_types = {{ network_available_types|safe }};
+            synnefo.config.network_allow_duplicate_vm_nics = {{ network_allow_duplicate_vm_nics }};
+            synnefo.config.network_strict_destroy = {{ network_strict_destroy }};
+            synnefo.config.network_allow_multiple_destory = {{ network_allow_multiple_destroy }};
+            synnefo.config.group_public_networks = {{ group_public_networks }};
+            synnefo.config.grouped_public_network_name = {{ grouped_public_network_name|safe }};
+            synnefo.config.vm_hostname_format = {{ vm_hostname_format|safe }};
+            synnefo.config.automatic_network_range_format = {{ automatic_network_range_format|safe }};
+            synnefo.config.custom_image_help_url = '{{ custom_image_help_url|safe }}';
+            
+            synnefo.auth_client = new synnefo.auth.AstakosClient({
+                login_url: synnefo.config.login_redirect,
+                logout_url: synnefo.config.logout_redirect,
+                cookie_name: synnefo.config.auth_cookie_name,
+                skip_redirects: {{ auth_skip_redirects|safe }},
+                logout_callback: function(client) {
+                    Backbone.history.navigate(client.config.logout_url);
+                    window.location = client.config.logout_url; 
+                }
+            });
+
+            // user config
+            synnefo.user = synnefo.auth_client;
+            if (!synnefo.user.get_token()) { 
+              synnefo.auth_client.redirect_to_login(); 
+            }
+
+            $(".usermenu .username").text("options");
+
+            // images config
+            synnefo.config.system_images_owners = {{ system_images_owners|safe }};
+            synnefo.ui.init();
+            synnefo.ui.main.bind("ready", function(){
+            });
+
+        })
+    </script>
+</body>
+</html>

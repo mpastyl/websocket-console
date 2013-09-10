@@ -1,0 +1,71 @@
+{% extends 'im/base_two_cols.html' %}
+{% load astakos_tags i18n %}
+{% block page.title %}
+{% trans "Signup" %}
+{% endblock %}
+
+{% block body.left %}
+<div class="centered">
+ 
+{% if third_party_token %} 
+	<img class="pic" src="{{ IM_STATIC_URL }}images/mailbox.png" />
+{% else %} 
+	<img class="pic" src="{{ IM_STATIC_URL }}images/ringer1.png" />
+{% endif %}
+</div> 
+{% endblock body.left %}
+
+{% block body.right %}
+<h2>
+	<span class="title">{% trans "SIGN UP" %}</span>
+	<span class="header-actions"><a href="{% url login %}">{% trans "Sign in" %}</a></span>
+
+</h2>
+{% if not third_party_token and not signup_form.errors %}
+ 
+<p>{% trans "Choose one of the following sign up methods." %}</p>
+ 
+<div class="extralogin">
+{% for provider_obj in auth_providers %}
+	{% if provider_obj.get_create_policy %}
+		{% if provider_obj.module == 'local' %}
+        <a href="#" class="submit standalone {{ provider_obj.module }}-provider" id="signup-classic">CLASSIC</a>
+            {% if "local" in im_modules %}
+            {% include "im/auth/signup_form.html" %}
+		    {% endif %}
+		{% else %}
+			{% if provider_obj.module == 'shibboleth' %}
+				<a href="{% provider_login_url provider_obj %}" class="submit standalone">ACADEMIC</a>
+			{% else %}
+			<a href="{% provider_login_url provider_obj %}" title="{{ provider_obj.get_title_msg }}" class="icons">
+				<img src=" {{ provider_obj.get_module_icon }}" alt="{{ provider_obj.get_title_msg }}">
+			</a>
+			{% endif %}
+		{% endif %}
+ 	{% endif %}
+    {% endfor %}
+</div>
+{% else %}
+
+{% if third_party_token %}
+<p>Hello, it seems this is the first time you try to access the service.
+Please provide us with the following information to complete your
+registration process. <br><br></p>
+{% endif %}
+
+{% include "im/auth/signup_form.html" %}
+{% endif %}
+<script>
+$(document).ready(function(){
+    $("#signup-classic").click(function(e){
+        e.preventDefault();
+        $(this).siblings('.form-stacked').slideToggle();
+    	pic = $(this).parents('.rt').siblings('.lt').find('img.pic');
+    	var src = (pic.attr('src') === '{{ IM_STATIC_URL }}images/ringer1.png')
+            ? '{{ IM_STATIC_URL }}images/ringer2.png'
+            : '{{ IM_STATIC_URL }}images/ringer1.png';
+        pic.attr('src', src);
+    })
+});    
+</script>    
+{% endblock %}

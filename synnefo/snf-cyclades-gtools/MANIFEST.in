@@ -1,0 +1,2 @@
+include kvm-vif-bridge 
+include distribute_setup.py
